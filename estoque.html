@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anteiku — Estoque</title>
+<style>
+:root{--bg:#f3f0e8;--panel:#fbfaf6;--ink:#171717;--muted:#6d6a64;--line:#d8d2c8;--red:#7f2525;--soft:#ece7de}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#101210;
+    --panel:#181b18;
+    --ink:#f0ede6;
+    --muted:#aaa69d;
+    --line:#343934;
+    --red:#a83f3f;
+    --soft:#222622;
+    --area:#141714;
+    --selected:#241b1b;
+    --bar:#303530;
+    --reaction:#101310;
+    --overlay:rgba(16,18,16,.94);
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+button,input{font:inherit}
+.wrap{width:min(1120px,calc(100% - 28px));margin:auto;padding:28px 0 40px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:18px}
+small.label{display:block;color:var(--red);font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+h1{margin:6px 0 0;font-size:clamp(2rem,5vw,4rem);letter-spacing:-.05em;line-height:1}
+.sub{color:var(--muted);max-width:700px;line-height:1.5;margin-top:10px}
+.home{color:var(--muted);text-decoration:none;font-size:.9rem}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.side{padding:16px;display:flex;flex-direction:column;gap:14px}
+.section{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--soft);border-radius:9px;padding:10px}
+.statline{display:flex;justify-content:space-between;font-weight:700;font-size:.85rem;margin-bottom:6px}
+.statline span{color:var(--red)}
+input[type=range]{width:100%;accent-color:var(--red)}
+.desc{font-size:.72rem;color:var(--muted);margin-top:4px;line-height:1.35}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{background:var(--soft);border-radius:9px;padding:10px}
+.metric span{display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.metric b{font-size:1.12rem}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--panel);cursor:pointer;font-weight:700}
+button.primary{background:var(--red);border-color:var(--red);color:white}
+button:disabled{opacity:.45;cursor:default}
+.help{font-size:.8rem;color:var(--muted);line-height:1.5}
+.game{min-height:690px;position:relative;overflow:hidden}
+.hud{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+.hud div{background:var(--panel);padding:12px}
+.hud span{display:block;font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.hud b{font-size:1.2rem}
+.board{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
+.area{
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px;
+  background:var(--area);
+}
+.area h2{font-size:1rem;margin:0 0 12px;display:flex;justify-content:space-between}
+.area h2 span{font-size:.72rem;color:var(--muted);font-weight:400}
+.crates{display:grid;gap:8px;min-height:410px;align-content:start}
+.crate{border:1px solid var(--line);border-radius:9px;padding:11px;background:var(--panel);cursor:pointer}
+.crate.selected{
+  border-color:var(--red);
+  box-shadow:0 0 0 1px var(--red) inset;
+  background:var(--selected);
+}
+.crate-top{display:flex;justify-content:space-between}
+.crate small{color:var(--muted)}
+.shelves{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.shelf{min-height:118px;background:var(--panel);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left}
+.shelf small{color:var(--muted);font-weight:400;margin-top:4px;line-height:1.3}
+.stamina{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.stamline{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted)}
+.bar{
+  height:5px;
+  background:var(--bar);
+  border-radius:99px;
+  overflow:hidden;
+  margin-top:6px;
+}
+.bar i{display:block;height:100%;background:var(--red)}
+.log{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;max-height:160px;overflow:auto}
+.log div{font-size:.76rem;color:var(--muted);padding:4px 0}
+.overlay{
+  position:absolute;
+  inset:0;
+  background:var(--overlay);
+  display:none;
+  place-items:center;
+  padding:20px;
+}
+.overlay.show{display:grid}
+.event{width:min(430px,100%);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;text-align:center}
+.event h3{margin:6px 0 8px;font-size:1.5rem}
+.event p{color:var(--muted);line-height:1.45}
+.reaction{
+  height:160px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  position:relative;
+  background:var(--reaction);
+  margin:14px 0;
+}
+.target{position:absolute;border:0;border-radius:50%;background:var(--red);color:white;display:grid;place-items:center;padding:0}
+.qte{height:5px;background:#e7e1d8;border-radius:99px;overflow:hidden}
+.qte{
+  height:5px;
+  background:var(--bar);
+  border-radius:99px;
+  overflow:hidden;
+}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.board{grid-template-columns:1fr}.game{min-height:900px}}
+@media(max-width:560px){header{flex-direction:column;align-items:flex-start}.hud{grid-template-columns:repeat(2,1fr)}.stats,.metrics,.shelves{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div>
+<small class="label">MiniGame Foda</small>
+<h1>Reposição de Estoque</h1>
+<div class="sub">Organize as caixas antes de esgotar a stamina. Força reduz o custo do peso. Vigor aumenta a resistência. Agilidade e Precisão ajudam nos imprevistos :skull:.</div>
+</div>
+<a class="home" href="index.html">Voltar</a>
+</header>
+
+<div class="layout">
+<aside class="panel side">
+<div class="section">Atributos</div>
+<div class="stats">
+<div class="stat"><div class="statline"><b>Força</b><span id="forValue">3</span></div><input id="forca" type="range" min="0" max="12" value="3"><div class="desc">Reduz o custo das caixas.</div></div>
+<div class="stat"><div class="statline"><b>Vigor</b><span id="vigValue">3</span></div><input id="vigor" type="range" min="0" max="12" value="3"><div class="desc">Aumenta a stamina.</div></div>
+<div class="stat"><div class="statline"><b>Agilidade</b><span id="agiValue">3</span></div><input id="agi" type="range" min="0" max="12" value="3"><div class="desc">Aumenta o tempo de reação.</div></div>
+<div class="stat"><div class="statline"><b>Precisão</b><span id="preValue">3</span></div><input id="pre" type="range" min="0" max="12" value="3"><div class="desc">Aumenta o alvo do reflexo.</div></div>
+</div>
+
+<div class="section">Escala</div>
+<div class="metrics">
+<div class="metric"><span>Stamina</span><b id="maxStamina">0</b></div>
+<div class="metric"><span>Redução peso</span><b id="weightReduction">0%</b></div>
+<div class="metric"><span>Reação</span><b id="reactionTime">0s</b></div>
+<div class="metric"><span>Recorde</span><b id="best">0</b></div>
+</div>
+
+<div class="actions">
+<button id="start" class="primary">Iniciar</button>
+<button id="reset">Reiniciar</button>
+</div>
+
+<div class="help">Clique em uma caixa e depois na prateleira correta. Quanto mais pesada a caixa, mais stamina ela consome.</div>
+</aside>
+
+<main class="panel game">
+<div class="hud">
+<div><span>Pontos</span><b id="score">0</b></div>
+<div><span>Combo</span><b id="combo">x1</b></div>
+<div><span>Repostos</span><b id="done">0</b></div>
+<div><span>Erros</span><b id="mistakes">0</b></div>
+<div><span>Ritmo</span><b id="level">1</b></div>
+</div>
+
+<div class="board">
+<section class="area">
+<h2>Caixas <span>clique para selecionar</span></h2>
+<div id="crates" class="crates"></div>
+<div class="stamina">
+<div class="stamline"><span>Stamina</span><b id="staminaText">0 / 0</b></div>
+<div class="bar"><i id="staminaFill"></i></div>
+</div>
+</section>
+
+<section class="area">
+<h2>Prateleiras <span>organize por categoria</span></h2>
+<div id="shelves" class="shelves"></div>
+<div id="log" class="log"></div>
+</section>
+</div>
+
+<div id="overlay" class="overlay">
+<div class="event">
+<small class="label">Reação</small>
+<h3 id="eventTitle">Caixa caindo</h3>
+<p id="eventText">Clique no alvo antes do tempo acabar.</p>
+<div id="reaction" class="reaction"><button id="target" class="target">!</button></div>
+<div class="qte"><i id="qteFill"></i></div>
+</div>
+</div>
+</main>
+</div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var $=function(id){return document.getElementById(id)};
+var el={
+forca:$("forca"),vigor:$("vigor"),agi:$("agi"),pre:$("pre"),
+forValue:$("forValue"),vigValue:$("vigValue"),agiValue:$("agiValue"),preValue:$("preValue"),
+maxStamina:$("maxStamina"),weightReduction:$("weightReduction"),reactionTime:$("reactionTime"),best:$("best"),
+start:$("start"),reset:$("reset"),score:$("score"),combo:$("combo"),done:$("done"),
+mistakes:$("mistakes"),level:$("level"),crates:$("crates"),shelves:$("shelves"),log:$("log"),
+staminaText:$("staminaText"),staminaFill:$("staminaFill"),overlay:$("overlay"),
+eventTitle:$("eventTitle"),eventText:$("eventText"),reaction:$("reaction"),target:$("target"),qteFill:$("qteFill")
+};
+
+var categories=[
+{id:"cafe",name:"Café e grãos",desc:"grãos, filtros e chá"},
+{id:"louca",name:"Louças",desc:"xícaras, pratos e copos"},
+{id:"frios",name:"Geladeira",desc:"leite e itens frios"},
+{id:"limpeza",name:"Limpeza",desc:"panos e detergentes"}
+];
+
+var names={
+cafe:["Saco de grãos","Filtros","Pacotes de chá"],
+louca:["Xícaras","Pratos","Copos"],
+frios:["Leite","Creme","Sobremesas"],
+limpeza:["Detergente","Panos","Sabão"]
+};
+
+var state={running:false,score:0,combo:1,done:0,mistakes:0,level:1,crates:[],selected:null,nextId:1,stamina:100,maxStamina:100,spawnTimer:null,recoverTimer:null,surpriseTimer:null,qte:null};
+
+function force(){return Number(el.forca.value)||0}
+function vigor(){return Number(el.vigor.value)||0}
+function agi(){return Number(el.agi.value)||0}
+function pre(){return Number(el.pre.value)||0}
+function reduction(){return Math.min(.58,force()*.055)}
+function maxStam(){return 88+vigor()*8}
+function qteTime(){return Math.max(.75,1+agi()*.08+pre()*.07-(state.level-1)*.02)}
+function targetSize(){return Math.min(100,54+pre()*4)}
+
+function getBest(){
+try{return Number(localStorage.getItem("anteikuEstoqueBest")||0)||0}catch(e){return 0}
+}
+
+function setBest(v){
+try{localStorage.setItem("anteikuEstoqueBest",String(v))}catch(e){}
+}
+
+function preview(){
+el.forValue.textContent=force();
+el.vigValue.textContent=vigor();
+el.agiValue.textContent=agi();
+el.preValue.textContent=pre();
+el.maxStamina.textContent=maxStam();
+el.weightReduction.textContent=Math.round(reduction()*100)+"%";
+el.reactionTime.textContent=qteTime().toFixed(2)+"s";
+}
+
+function hud(){
+el.score.textContent=Math.max(0,Math.floor(state.score));
+el.combo.textContent="x"+state.combo;
+el.done.textContent=state.done;
+el.mistakes.textContent=state.mistakes;
+el.level.textContent=state.level;
+el.staminaText.textContent=Math.round(state.stamina)+" / "+state.maxStamina;
+el.staminaFill.style.width=Math.max(0,state.stamina/state.maxStamina*100)+"%";
+preview();
+}
+
+function log(text){
+var d=document.createElement("div");
+d.textContent=text;
+el.log.insertBefore(d,el.log.firstChild);
+while(el.log.children.length>18)el.log.removeChild(el.log.lastChild);
+}
+
+function renderCrates(){
+el.crates.innerHTML="";
+for(var i=0;i<state.crates.length;i++){
+var c=state.crates[i];
+var d=document.createElement("div");
+d.className="crate"+(state.selected===c.id?" selected":"");
+d.setAttribute("data-id",String(c.id));
+var effective=Math.max(.5,c.weight*(1-reduction()));
+d.innerHTML='<div class="crate-top"><b>'+c.name+'</b><b>'+effective.toFixed(1)+'</b></div><small>'+categoryName(c.cat)+'</small>';
+el.crates.appendChild(d);
+}
+}
+
+function renderShelves(){
+el.shelves.innerHTML="";
+for(var i=0;i<categories.length;i++){
+var c=categories[i];
+var b=document.createElement("button");
+b.className="shelf";
+b.setAttribute("data-cat",c.id);
+b.innerHTML="<b>"+c.name+"</b><small>"+c.desc+"</small>";
+el.shelves.appendChild(b);
+}
+}
+
+function categoryName(id){
+for(var i=0;i<categories.length;i++)if(categories[i].id===id)return categories[i].name;
+return "";
+}
+
+function findCrate(id){
+for(var i=0;i<state.crates.length;i++)if(state.crates[i].id===id)return state.crates[i];
+return null;
+}
+
+function spawn(){
+if(!state.running||state.qte||state.crates.length>=6)return;
+var cat=categories[Math.floor(Math.random()*categories.length)];
+var list=names[cat.id];
+var weight=1+Math.floor(Math.random()*5)+Math.floor(state.level/4);
+state.crates.push({id:state.nextId++,cat:cat.id,name:list[Math.floor(Math.random()*list.length)],weight:weight});
+renderCrates();
+}
+
+function workCost(c){
+return Math.max(4,c.weight*9*(1-reduction()));
+}
+
+function place(cat){
+if(!state.running||state.qte)return;
+var c=findCrate(state.selected);
+if(!c){
+log("Selecione uma caixa primeiro.");
+return;
+}
+if(c.cat===cat){
+var cost=workCost(c);
+state.stamina=Math.max(0,state.stamina-cost);
+var fatigue=state.stamina/state.maxStamina;
+var gain=Math.round((65+c.weight*14)*state.combo*(.65+.35*fatigue));
+state.score+=gain;
+state.done++;
+state.combo=Math.min(9,state.combo+1);
+state.crates=state.crates.filter(function(x){return x.id!==c.id});
+state.selected=null;
+log(c.name+" guardado. +"+gain);
+if(state.done%6===0){
+state.level++;
+log("O ritmo aumentou.");
+}
+if(state.stamina<=0){
+state.score-=100;
+state.combo=1;
+state.stamina=state.maxStamina*.35;
+log("Você precisou parar para recuperar o fôlego.");
+}
+spawn();
+}else{
+state.mistakes++;
+state.combo=Math.max(1,state.combo-1);
+state.score-=60;
+log("Prateleira errada. -60");
+}
+saveBest();
+hud();
+renderCrates();
+}
+
+function recover(){
+if(!state.running||state.qte)return;
+state.stamina=Math.min(state.maxStamina,state.stamina+.7+vigor()*.22);
+hud();
+}
+
+function scheduleSurprise(){
+clearTimeout(state.surpriseTimer);
+if(!state.running)return;
+var delay=7000+Math.random()*6500-Math.min(2200,state.level*160);
+state.surpriseTimer=setTimeout(function(){
+if(state.running&&!state.qte)startQte();
+scheduleSurprise();
+},delay);
+}
+
+function startQte(){
+var scenes=[
+["Caixa caindo","Clique no alvo antes que ela atinja o chão."],
+["Garrafa escorregando","Intercepte antes que o vidro quebre."],
+["Prateleira balançando","Segure o ponto certo rapidamente."]
+];
+var s=scenes[Math.floor(Math.random()*scenes.length)];
+var duration=qteTime()*1000;
+var size=targetSize();
+state.qte={end:Date.now()+duration,duration:duration};
+el.eventTitle.textContent=s[0];
+el.eventText.textContent=s[1];
+el.target.style.width=size+"px";
+el.target.style.height=size+"px";
+el.overlay.classList.add("show");
+setTimeout(function(){
+var w=el.reaction.clientWidth-size-12;
+var h=el.reaction.clientHeight-size-12;
+el.target.style.left=(6+Math.random()*Math.max(0,w))+"px";
+el.target.style.top=(6+Math.random()*Math.max(0,h))+"px";
+},0);
+qteFrame();
+}
+
+function qteFrame(){
+if(!state.qte)return;
+var left=state.qte.end-Date.now();
+var pct=Math.max(0,left/state.qte.duration*100);
+el.qteFill.style.width=pct+"%";
+if(left<=0){
+finishQte(false);
+return;
+}
+requestAnimationFrame(qteFrame);
+}
+
+function finishQte(ok){
+if(!state.qte)return;
+if(ok){
+var gain=120+state.level*15+agi()*4+pre()*4;
+state.score+=gain;
+state.stamina=Math.min(state.maxStamina,state.stamina+8+vigor());
+log("Imprevisto resolvido. +"+gain);
+}else{
+var loss=Math.max(45,145-agi()*5-pre()*5);
+state.score-=loss;
+state.mistakes++;
+state.combo=Math.max(1,state.combo-1);
+state.stamina=Math.max(0,state.stamina-10);
+log("Você não reagiu a tempo. -"+loss);
+}
+state.qte=null;
+el.overlay.classList.remove("show");
+saveBest();
+hud();
+}
+
+function saveBest(){
+var current=Math.max(0,Math.floor(state.score));
+var best=getBest();
+if(current>best){
+setBest(current);
+el.best.textContent=current;
+}
+}
+
+function stop(){
+state.running=false;
+clearInterval(state.spawnTimer);
+clearInterval(state.recoverTimer);
+clearTimeout(state.surpriseTimer);
+state.spawnTimer=null;
+state.recoverTimer=null;
+state.surpriseTimer=null;
+state.qte=null;
+el.overlay.classList.remove("show");
+el.start.disabled=false;
+[el.forca,el.vigor,el.agi,el.pre].forEach(function(x){x.disabled=false});
+}
+
+function reset(){
+stop();
+state.score=0;
+state.combo=1;
+state.done=0;
+state.mistakes=0;
+state.level=1;
+state.crates=[];
+state.selected=null;
+state.nextId=1;
+state.maxStamina=maxStam();
+state.stamina=state.maxStamina;
+el.log.innerHTML="";
+renderCrates();
+renderShelves();
+hud();
+log("Ajuste os atributos e inicie o turno.");
+}
+
+function start(){
+reset();
+state.running=true;
+state.maxStamina=maxStam();
+state.stamina=state.maxStamina;
+el.start.disabled=true;
+[el.forca,el.vigor,el.agi,el.pre].forEach(function(x){x.disabled=true});
+log("Turno iniciado.");
+spawn();
+setTimeout(spawn,300);
+setTimeout(spawn,600);
+setTimeout(spawn,900);
+state.spawnTimer=setInterval(spawn,1900);
+state.recoverTimer=setInterval(recover,500);
+scheduleSurprise();
+hud();
+}
+
+el.crates.addEventListener("click",function(e){
+var card=e.target.closest(".crate");
+if(!card||!state.running||state.qte)return;
+state.selected=Number(card.getAttribute("data-id"));
+renderCrates();
+});
+
+el.shelves.addEventListener("click",function(e){
+var shelf=e.target.closest(".shelf");
+if(!shelf)return;
+place(shelf.getAttribute("data-cat"));
+});
+
+el.target.addEventListener("click",function(e){
+e.stopPropagation();
+finishQte(true);
+});
+
+el.reaction.addEventListener("click",function(e){
+if(e.target!==el.target&&state.qte)finishQte(false);
+});
+
+[el.forca,el.vigor,el.agi,el.pre].forEach(function(x){x.addEventListener("input",preview)});
+el.start.addEventListener("click",start);
+el.reset.addEventListener("click",reset);
+
+el.best.textContent=getBest();
+reset();
+preview();
+})();
+</script>
+</body>
+</html>
