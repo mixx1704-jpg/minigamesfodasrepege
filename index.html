@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#100d0d">
+  <meta name="description" content="Minigames da Anteiku para o RPG Fome e Justiça: Turno de Garçom e Reposição de Estoque.">
+  <title>Anteiku — Minigames | Fome e Justiça</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand" type="button" data-action="go-lobby" aria-label="Voltar à central">
+        <span class="brand-mark" aria-hidden="true">安</span>
+        <span><b>ANTEIKU</b><small>FOME &amp; JUSTIÇA</small></span>
+      </button>
+
+      <nav class="game-nav" aria-label="Minigames">
+        <button type="button" data-view="waiter">GARÇOM</button>
+        <button type="button" data-view="stock">ESTOQUE</button>
+      </nav>
+
+      <div class="utility-actions">
+        <button class="icon-button" type="button" data-action="toggle-sound" aria-label="Ativar ou desativar som" title="Som">
+          <span data-sound-icon aria-hidden="true">SOM</span>
+        </button>
+        <button class="icon-button" type="button" data-action="toggle-theme" aria-label="Alternar tema" title="Alternar tema">
+          <span data-theme-icon aria-hidden="true">☾</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="screen" tabindex="-1"></main>
+    <div id="modal-root"></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
